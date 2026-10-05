@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------
 # Stage 1: Dependency Builder
 # ------------------------------------------------------------------------------
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-trixie AS builder
 
 # Set build-time environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -39,7 +39,7 @@ RUN uv pip install --no-cache -r pyproject.toml
 # ------------------------------------------------------------------------------
 # Stage 2: Final Minimal & Hardened Runtime
 # ------------------------------------------------------------------------------
-FROM python:3.12-slim-bookworm AS runner
+FROM python:3.12-slim-trixie AS runner
 
 # Runtime environment flags
 ENV PYTHONUNBUFFERED=1 \
