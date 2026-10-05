@@ -12,7 +12,6 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}  # E.g. arn:aws:iam::725079717969:role/GitHubActionsAgentCoreDeployRole
 
 jobs:
   # ============================================================================
@@ -45,7 +44,7 @@ jobs:
           ruff check app/ lambda_ingest/ vector_db/ tests/ evals/ || echo "Linting completed with warnings."
 
       - name: Configure AWS Credentials (for Bedrock Tests)
-        if: env.AWS_ROLE_ARN != ''
+        if: ${{ secrets.AWS_ROLE_ARN != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -53,19 +52,19 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Run Multi-Turn Session Isolation Tests
-        if: env.AWS_ROLE_ARN != ''
+        if: ${{ secrets.AWS_ROLE_ARN != '' }}
         run: |
           echo "Executing session isolation suite..."
           python tests/test_sessions.py
 
       - name: Run Vector Pipeline Tests
-        if: env.AWS_ROLE_ARN != ''
+        if: ${{ secrets.AWS_ROLE_ARN != '' }}
         run: |
           echo "Executing serverless vector pipeline tests..."
           python tests/test_vector_pipeline.py
 
       - name: "Run LLMOps Benchmark Suite (Judge: Nova Lite)"
-        if: env.AWS_ROLE_ARN != ''
+        if: ${{ secrets.AWS_ROLE_ARN != '' }}
         run: |
           echo "Executing LLM-as-a-Judge benchmark on 10 Golden Test Cases..."
           python evals/run_evals.py
@@ -84,7 +83,7 @@ jobs:
   deploy-to-aws:
     name: 🚀 Deploy Container & Ingestion Pipeline
     needs: quality-and-eval-gate
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.AWS_ROLE_ARN != ''
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.AWS_ROLE_ARN != '' }}
     runs-on: ubuntu-latest
 
     steps:
