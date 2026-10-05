@@ -181,6 +181,35 @@ agentcore invoke --prompt "What constitutes a quorum for the Board of Directors 
 agentcore invoke --prompt "If an incident is opened on 2026-10-05, calculate the resolution deadline for a 7 business day SLA."
 ```
 
+### 7. Launch Private Upload & Interviewer Testing Portal (FastAPI)
+Run the dedicated, private FastAPI service enabling interviewers/RH to upload custom `.docx`, `.txt`, or `.md` files to S3 and query the multi-agent squad with exact citations:
+
+```bash
+# Start the FastAPI server (Port 8000)
+python app/BedrockAgentCoreApp/server.py
+```
+
+- **Private Access URL:** `http://localhost:8000/?token=cfas-agent-demo-2026`
+- **Security:** Protected via token validation (`?token=...`, `X-API-Key` header, or Bearer auth).
+- **Automated Workflow:**
+  1. Interviewer uploads any document via the web UI or `POST /api/upload`.
+  2. The document is streamed directly to `s3://cfas-corporate-docs-725079717969/uploads/cfas-corp/<filename>`.
+  3. Context-enriched semantic chunking extracts sections and generates 1024-dim embeddings via `amazon.titan-embed-text-v2:0`.
+  4. S3 vector store is updated and retriever cache refreshed.
+  5. Interviewers immediately query the document via chat or `POST /api/chat`, receiving verified answers with exact legal/document citations.
+
+```bash
+# Upload via cURL:
+curl -X POST "http://localhost:8000/api/upload?token=cfas-agent-demo-2026" \
+     -F "file=@data/cfas-bylaws-rev-9.docx" \
+     -F "tenant_id=cfas-corp"
+
+# Query the agent squad via cURL:
+curl -X POST "http://localhost:8000/api/chat?token=cfas-agent-demo-2026" \
+     -H "Content-Type: application/json" \
+     -d '{"prompt": "Summarize the key provisions of the file I just uploaded."}'
+```
+
 ---
 
 ## 📊 Evaluation & Benchmark Scorecard

@@ -100,11 +100,12 @@ bylaws_specialist_strands = Agent(
     tools=[search_company_bylaws],
     conversation_manager=NullConversationManager(),
     system_prompt=(
-        "You are the Corporate Bylaws Specialist agent. You specialize in CFAS corporate governance, "
-        "bylaws, board of directors rules, officer duties, emergency expenditures, and quorum requirements. "
-        "Always use search_company_bylaws to retrieve verified excerpts from the bylaws knowledge base, "
-        "and cite the exact Article and Section numbers. "
-        "Identify yourself as the Corporate Bylaws Specialist."
+        "You are the Corporate Bylaws & Document Specialist agent. You specialize in CFAS corporate governance, "
+        "bylaws, board of directors rules, officer duties, emergency expenditures, quorum requirements, "
+        "and any uploaded corporate documents and policies. "
+        "Always use search_company_bylaws to retrieve verified excerpts from the knowledge base, "
+        "and cite the exact Article, Section, or document headers. "
+        "Identify yourself as the Corporate Bylaws & Document Specialist."
     ),
 )
 
@@ -217,10 +218,11 @@ class RobustBedrockClassifier(BedrockClassifier):
                     # Semantic keyword fallback if classifier chose 'unknown'
                     if not selected or agent_id == "unknown":
                         t = input_text.lower()
-                        if any(w in t for w in ["asts", "stock", "share", "press release", "equity", "valuation"]):
-                            selected = self.agents.get("ast-spacemobile-stock-analyst")
-                        elif any(w in t for w in ["quorum", "bylaw", "board", "officer", "voting", "election", "expenditure"]):
+                        # Document / Uploaded file questions take precedence unless ASTS is explicitly mentioned
+                        if any(w in t for w in ["rubric", "upload", "file", "document", "policy", "bylaw", "quorum", "board", "officer", "voting", "clause", "provision", "agreement", "stipend"]):
                             selected = self.agents.get("corporate-bylaws-specialist")
+                        elif any(w in t for w in ["asts", "ast spacemobile", "stock", "share price", "52-week", "press release"]):
+                            selected = self.agents.get("ast-spacemobile-stock-analyst")
                         else:
                             selected = self.agents.get("operations-general-assistant")
 
@@ -234,10 +236,10 @@ class RobustBedrockClassifier(BedrockClassifier):
 
         # Fallback to general assistant
         t = input_text.lower()
-        if any(w in t for w in ["asts", "stock", "share", "press release"]):
-            chosen = self.agents.get("ast-spacemobile-stock-analyst")
-        elif any(w in t for w in ["quorum", "bylaw", "board", "officer", "voting"]):
+        if any(w in t for w in ["rubric", "upload", "file", "document", "policy", "bylaw", "quorum", "board", "officer", "voting", "stipend"]):
             chosen = self.agents.get("corporate-bylaws-specialist")
+        elif any(w in t for w in ["asts", "ast spacemobile", "stock", "share price", "press release"]):
+            chosen = self.agents.get("ast-spacemobile-stock-analyst")
         else:
             chosen = self.agents.get("operations-general-assistant")
 
@@ -363,6 +365,14 @@ async def invoke(payload: dict, context: Any) -> AsyncGenerator[dict, None]:
             }
         }
     }
+
+
+# Mount the FastAPI testing portal onto the BedrockAgentCore Starlette runtime
+try:
+    from server import app as portal_app
+    app.mount("/portal", portal_app)
+except Exception as _e:
+    log.warning(f"Could not mount portal app: {_e}")
 
 
 if __name__ == "__main__":

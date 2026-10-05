@@ -16,7 +16,10 @@ dependencies = [
     "strands-agents >= 1.15.0",
     "strands-agents-tools",
     "requests >= 2.31.0",
-    "agent-squad >= 1.1.4"
+    "agent-squad >= 1.1.4",
+    "fastapi >= 0.110.0",
+    "uvicorn[standard] >= 0.28.0",
+    "python-multipart >= 0.0.9"
 ]
 
 [tool.hatch.build.targets.wheel]

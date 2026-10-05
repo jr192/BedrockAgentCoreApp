@@ -60,17 +60,25 @@ def _load_bylaws_index() -> list[dict]:
     return []
 
 
+def reload_index() -> list[dict]:
+    """Force reloads the index cache from S3 or local files."""
+    global _INDEX_CACHE
+    _INDEX_CACHE = []
+    return _load_bylaws_index()
+
+
 @tool
-def search_company_bylaws(query: str) -> list[dict]:
+def search_company_documents(query: str) -> list[dict]:
     """
-    Search the corporate bylaws knowledge base for voting rules,
-    quorum requirements, officer duties, emergency expenditures, and board governance.
+    Search corporate bylaws and uploaded company documents.
+    Retrieves verified excerpts, legal citations, policies, and governance
+    rules from all indexed documents in the S3 vector store.
 
     Args:
-        query: Semantic question (e.g. 'What constitutes a quorum for the Board of Directors?').
+        query: Semantic question (e.g. 'What constitutes a quorum?' or 'Summarize uploaded document').
 
     Returns:
-        Verified legal excerpts with citations, confidence scores, and source links.
+        Verified excerpts with citations, confidence scores, and source links.
     """
     # 1. Primary: High-performance partitioned Vector Database
     if _VECTOR_DB is not None:
@@ -85,8 +93,8 @@ def search_company_bylaws(query: str) -> list[dict]:
             results = _VECTOR_DB.search(
                 query_vector=q_vec,
                 tenant_id="cfas-corp",
-                category="governance",
-                top_k=3,
+                category=None,  # Search across all document categories
+                top_k=4,
                 query_text=query,
             )
             if results:
@@ -97,7 +105,7 @@ def search_company_bylaws(query: str) -> list[dict]:
     # 2. Fallback: Pre-computed index file
     chunks = _load_bylaws_index()
     if not chunks:
-        return [{"error": "Bylaws index could not be loaded."}]
+        return [{"error": "Document index could not be loaded."}]
 
     try:
         # Embed the query with Titan v2 (costs ~$0.0000002)
@@ -115,24 +123,30 @@ def search_company_bylaws(query: str) -> list[dict]:
         scored = []
         for c in chunks:
             dot = sum(x * y for x, y in zip(q_vec, c["embedding"]))
-            # Keyword relevance boost for exact matches in header/text
-            c_text_lower = c["text"].lower()
-            c_header_lower = c["header"].lower()
-            kw_matches = sum(1 for w in query_words if w in c_text_lower or w in c_header_lower)
-            kw_bonus = min(0.08, kw_matches * 0.02)
+            # Keyword relevance boost for exact matches in header/text/filename
+            c_text_lower = c.get("text", "").lower()
+            c_header_lower = c.get("header", "").lower()
+            c_file_lower = c.get("filename", "").lower()
+            kw_matches = sum(1 for w in query_words if w in c_text_lower or w in c_header_lower or w in c_file_lower)
+            kw_bonus = min(0.10, kw_matches * 0.02)
             total_score = dot + kw_bonus
 
             scored.append({
-                "citation": c.get("header", ""),
-                "article": c.get("article", ""),
+                "citation": c.get("header") or c.get("citation", "General Section"),
+                "article": c.get("article", "General"),
                 "section": c.get("section", ""),
                 "score": round(float(total_score), 4),
                 "content": c.get("text", ""),
-                "source": SOURCE_URI,
+                "filename": c.get("filename", "cfas-bylaws-rev-9.docx"),
+                "source": c.get("s3_uri") or SOURCE_URI,
             })
 
         scored.sort(key=lambda x: x["score"], reverse=True)
-        return scored[:3]
+        return scored[:4]
 
     except Exception as e:
-        return [{"error": f"Failed to retrieve bylaws excerpts: {str(e)}"}]
+        return [{"error": f"Failed to retrieve document excerpts: {str(e)}"}]
+
+
+# Alias for backward compatibility with existing agent definitions
+search_company_bylaws = search_company_documents
