@@ -20,6 +20,8 @@ jobs:
   quality-and-eval-gate:
     name: 🧪 Quality, Session & LLMOps Gate
     runs-on: ubuntu-latest
+    outputs:
+      has_aws: ${{ steps.check-aws.outputs.has_aws }}
 
     steps:
       - name: Checkout Code
@@ -43,8 +45,21 @@ jobs:
           echo "Running static analysis and linting..."
           ruff check app/ lambda_ingest/ vector_db/ tests/ evals/ || echo "Linting completed with warnings."
 
+      - name: Check AWS Secrets Configuration
+        id: check-aws
+        env:
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          if [ -n "$ROLE_ARN" ]; then
+            echo "AWS_ROLE_ARN is configured. AWS evaluation steps enabled."
+            echo "has_aws=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "AWS_ROLE_ARN secret not configured. Skipping AWS-dependent cloud tests."
+            echo "has_aws=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Configure AWS Credentials (for Bedrock Tests)
-        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        if: steps.check-aws.outputs.has_aws == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
@@ -52,19 +67,19 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Run Multi-Turn Session Isolation Tests
-        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        if: steps.check-aws.outputs.has_aws == 'true'
         run: |
           echo "Executing session isolation suite..."
           python tests/test_sessions.py
 
       - name: Run Vector Pipeline Tests
-        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        if: steps.check-aws.outputs.has_aws == 'true'
         run: |
           echo "Executing serverless vector pipeline tests..."
           python tests/test_vector_pipeline.py
 
       - name: "Run LLMOps Benchmark Suite (Judge: Nova Lite)"
-        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        if: steps.check-aws.outputs.has_aws == 'true'
         run: |
           echo "Executing LLM-as-a-Judge benchmark on 10 Golden Test Cases..."
           python evals/run_evals.py
@@ -83,7 +98,7 @@ jobs:
   deploy-to-aws:
     name: 🚀 Deploy Container & Ingestion Pipeline
     needs: quality-and-eval-gate
-    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.AWS_ROLE_ARN != '' }}
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.quality-and-eval-gate.outputs.has_aws == 'true'
     runs-on: ubuntu-latest
 
     steps:
