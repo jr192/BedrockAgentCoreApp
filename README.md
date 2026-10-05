@@ -27,31 +27,80 @@ Test the live multi-agent system and custom document ingestion directly in your 
 
 ```mermaid
 flowchart TD
-    subgraph Client ["Client Layer"]
-        CLI["agentcore invoke / HTTP Endpoint"]
+    subgraph Clients ["1. Client & Evaluation Layer"]
+        BROWSER["🌐 Web Browser<br/>(HR / Recruiters / Interviewers)<br/><code>?token=cfas-agent-demo-2026</code>"]
+        CLI["💻 Developer / CI/CD CLI<br/><code>agentcore invoke</code>"]
     end
 
-    subgraph Supervisor ["Multi-Agent Supervisor (AgentSquad)"]
-        CLASS["Robust Bedrock Classifier<br/>(amazon.nova-micro-v1:0)"]
+    subgraph PortalLayer ["2. Serverless Presentation & Ingestion Layer (AWS Lambda)"]
+        FURL["⚡ AWS Lambda Function URL<br/><code>https://...lambda-url.us-east-1.on.aws</code><br/>($0.00 Idle Cost • Public HTTPS • CORS Enabled)"]
+        FASTAPI["FastAPI Portal Application<br/>(Mangum ASGI Adapter • Python 3.12)"]
+        
+        EP1["GET /<br/>Executive Dark-Mode Glassmorphism UI"]
+        EP2["POST /api/upload<br/>Direct S3 Document Ingestion"]
+        EP3["GET /api/documents<br/>S3 Vector Catalog Registry"]
+        EP4["POST /api/chat<br/>SigV4 Invocation Proxy"]
     end
 
-    subgraph Agents ["Specialized Sub-Agents (Strands SDK)"]
-        A1["AST SpaceMobile Stock Analyst<br/>• Live market quotes & 52-week data<br/>• Official company press releases"]
-        A2["Corporate Bylaws Specialist<br/>• Zero-idle-cost semantic retrieval<br/>• Verified legal citations (Articles I-XV)"]
-        A3["Operations & General Assistant<br/>• Deterministic arithmetic calculator<br/>• Business day SLA scheduling<br/>• Keyword frequency analytics"]
+    subgraph AgentCoreLayer ["3. Autonomous Multi-Agent Core (AWS Bedrock AgentCore Runtime)"]
+        SUPERVISOR["🧠 Autonomous Supervisor Router<br/>(AgentSquad • amazon.nova-micro-v1:0)"]
+        
+        subgraph SubAgents ["Specialized Sub-Agents (Strands SDK 1.50)"]
+            A1["📈 AST SpaceMobile Stock Analyst<br/>• Real-time stock prices & 52W range<br/>• Official company press releases"]
+            A2["🏛️ Corporate Bylaws Specialist<br/>• Zero-idle-cost semantic search<br/>• Verified legal citations (Articles I-XV)"]
+            A3["⏱️ Operations & General Assistant<br/>• Deterministic math & business SLAs<br/>• Keyword frequency analytics"]
+        end
     end
 
-    subgraph Storage ["Serverless Storage & Ingestion"]
-        S3["AWS S3 Bucket<br/>(s3://.../uploads/)"] -->|s3:ObjectCreated| LAMBDA["Ingestion Lambda<br/>(corporate-bylaws-ingest-worker)"]
-        LAMBDA --> TITAN["amazon.titan-embed-text-v2:0"]
-        TITAN --> VEC[("S3 Vector Store<br/>s3://.../bylaws/bylaws_index.json<br/>($0.00 idle cost)")]
+    subgraph StorageLayer ["4. Serverless Storage & Vector Layer ($0.00 Idle Cost)"]
+        S3_DOCS[("📦 AWS S3 Bucket<br/><code>cfas-corporate-docs-725079717969</code><br/>• /uploads/ (User uploaded docs)<br/>• /bylaws/ (Core governance)")]
+        
+        INGEST_WORKER["⚡ Ingestion Worker<br/>(corporate-bylaws-ingest-worker)<br/>Semantic Chunking Engine"]
+        
+        TITAN["🔤 Amazon Titan Text Embeddings v2<br/>(amazon.titan-embed-text-v2:0 • 1024-dim)"]
+        
+        VEC_STORE[("🗄️ S3 Serverless Vector Index<br/><code>bylaws/bylaws_index.json</code><br/>(< 20ms In-Memory Cosine Similarity)")]
     end
 
-    CLI --> CLASS
-    CLASS -->|Market Inquiries| A1
-    CLASS -->|Bylaws & Governance| A2
-    CLASS -->|Math, SLAs, General| A3
-    A2 -.->|Searches| VEC
+    subgraph CICDLayer ["5. Automated CI/CD & LLMOps Pipeline (GitHub Actions)"]
+        GHA["🚀 GitHub Actions Workflow<br/><code>.github/workflows/deploy.yml</code>"]
+        GATES["🛡️ Quality & Security Gates<br/>• Session Isolation Tests<br/>• Multi-Tenant Partitioning<br/>• PII & Prompt Injection Defense"]
+        EVAL_JUDGE["📊 LLM-as-a-Judge Eval Gate<br/>(amazon.nova-lite-v1:0 • 90% Pass Rate)"]
+    end
+
+    %% Client Connections
+    BROWSER --> FURL
+    FURL --> FASTAPI
+    FASTAPI --> EP1
+    FASTAPI --> EP2
+    FASTAPI --> EP3
+    FASTAPI --> EP4
+
+    %% CLI / Direct Access
+    CLI --> SUPERVISOR
+
+    %% Portal to Backend
+    EP4 -->|SigV4 InvokeAgentRuntime| SUPERVISOR
+    EP2 -->|Uploads .docx, .txt, .md| S3_DOCS
+    EP2 -->|Triggers Chunking & Embedding| TITAN
+    EP3 -->|Reads Vector Index| S3_DOCS
+
+    %% Event Driven Ingestion
+    S3_DOCS -->|s3:ObjectCreated| INGEST_WORKER
+    INGEST_WORKER --> TITAN
+    TITAN --> VEC_STORE
+
+    %% Supervisor Routing
+    SUPERVISOR -->|Market Queries| A1
+    SUPERVISOR -->|Governance & Bylaws| A2
+    SUPERVISOR -->|Math & SLAs| A3
+    A2 -.->|In-Memory Semantic Search| VEC_STORE
+
+    %% CI/CD
+    GHA --> GATES
+    GATES --> EVAL_JUDGE
+    EVAL_JUDGE -->|Automated Release| AgentCoreLayer
+    EVAL_JUDGE -->|Automated Release| PortalLayer
 ```
 
 ---
@@ -63,13 +112,24 @@ BedrockAgentCoreApp/
 ├── AGENTS.md                          # Bedrock AgentCore mental model & CLI invariants
 ├── README.md                          # Comprehensive project & operations documentation
 ├── .gitignore                         # Python, venv, local vector stores, and CDK ignores
+├── docker-compose.yml                 # Local multi-service orchestration
 │
-├── app/                               # 🚀 Production Agent Runtime (Deployed via CDK CodeZip)
+├── .github/                           # 🚀 CI/CD Pipeline & GitHub Automation
+│   └── workflows/
+│       └── deploy.yml                 # Automated testing, LLM evaluation, and AWS deploy
+│
+├── lambda_portal/                     # 🌐 Serverless Web Portal (AWS Lambda Function URL)
+│   ├── portal_lambda.py               # FastAPI application with glassmorphic UI & chat proxy
+│   └── handler.py                     # Cloud-native chunking & Titan v2 embedding handler
+│
+├── app/                               # 🧠 Production Multi-Agent Runtime (AWS Bedrock AgentCore)
 │   └── BedrockAgentCoreApp/
 │       ├── main.py                    # Multi-agent supervisor (AgentSquad) & streaming entrypoint
 │       ├── bylaws_retriever.py        # Semantic bylaws retriever tool (Titan v2 + S3 Vector Store)
 │       ├── bylaws_index.json          # Pre-computed 1024-dim vector index (690 KB)
 │       ├── stock_analyst.py           # ASTS stock quotes & press release tools
+│       ├── server.py                  # Standalone FastAPI server for local testing
+│       ├── Dockerfile                 # Hardened container for containerized deployments
 │       ├── pyproject.toml             # Production dependencies (strands-agents, agent-squad)
 │       ├── model/                     # Bedrock model loader
 │       ├── mcp_client/                # MCP client utilities
@@ -90,9 +150,11 @@ BedrockAgentCoreApp/
 ├── tests/                             # 🧪 Automated Test Suites
 │   ├── test_sessions.py               # Multi-turn session isolation tests
 │   ├── test_vector_pipeline.py        # S3 ingestion & vector retrieval pipeline tests
-│   └── test_guardrail.py              # Bedrock Guardrail red-teaming (PII & injection tests)
+│   ├── test_guardrail.py              # Bedrock Guardrail red-teaming (PII & injection tests)
+│   └── test_upload_portal.py          # FastAPI web portal & token verification tests
 │
 ├── scripts/                           # 🛠️ Operational & Deployment Scripts
+│   ├── deploy_portal_lambda.py        # Automated Lambda Function URL deployer
 │   ├── deploy_ingest_lambda.py        # Automated Lambda & S3 trigger deployer
 │   └── compare_chunking.py            # Fixed-window vs. Semantic chunking comparison
 │
@@ -130,6 +192,12 @@ Document vectors are partitioned in Apache Arrow columnar format:
 Using custom `StrandsAdapterAgent` wrappers with isolated chat history:
 - Session A recalls its previous conversation context.
 - Session B receives zero data bleed from Session A, preventing cross-tenant information disclosure.
+
+### 4. Dual-Tier Serverless Architecture (AgentCore + Lambda Function URL)
+We decoupled the compute-heavy agent reasoning engine from the client presentation/upload tier:
+- **Tier 1 (AgentCore Runtime):** Dedicated multi-agent reasoning cluster on AWS Bedrock AgentCore with session management and live streaming.
+- **Tier 2 (Serverless Web Portal Lambda):** AWS Lambda function with a native Public Function URL serving FastAPI + Mangum.
+- **Cost Impact:** Delivers a fully interactive, production web UI with file uploads and streaming chat for **$0.00 / month idle cost**, eliminating expensive Application Load Balancers (~$20/mo) and continuous ECS containers (~$35/mo).
 
 ---
 
@@ -198,34 +266,42 @@ agentcore invoke --prompt "What constitutes a quorum for the Board of Directors 
 agentcore invoke --prompt "If an incident is opened on 2026-10-05, calculate the resolution deadline for a 7 business day SLA."
 ```
 
-### 7. Launch Private Upload & Interviewer Testing Portal (FastAPI)
-Run the dedicated, private FastAPI service enabling interviewers/RH to upload custom `.docx`, `.txt`, or `.md` files to S3 and query the multi-agent squad with exact citations:
+### 7. Deploy & Access the Executive Web Testing Portal
+
+#### A. Production AWS Deployment (Serverless Lambda + Function URL)
+Deploy the serverless web portal to AWS Lambda with an auto-provisioned public HTTPS Function URL:
 
 ```bash
-# Start the FastAPI server (Port 8000)
+# Package and deploy portal lambda to AWS (Zero idle cost, 512MB RAM)
+python scripts/deploy_portal_lambda.py
+```
+
+- **Live Public URL:** `https://b6ijwq6a2ng5q3gbe3kjwl5a5a0suxlf.lambda-url.us-east-1.on.aws/?token=cfas-agent-demo-2026`
+- **Security:** Private access token verification (`?token=...`, `X-API-Key` header, or Bearer auth).
+- **Public Testing via cURL:**
+  ```bash
+  # Check live health status
+  curl -s https://b6ijwq6a2ng5q3gbe3kjwl5a5a0suxlf.lambda-url.us-east-1.on.aws/api/health
+
+  # Ingest custom document (.docx, .txt, .md) to S3 & generate Titan v2 embeddings
+  curl -X POST "https://b6ijwq6a2ng5q3gbe3kjwl5a5a0suxlf.lambda-url.us-east-1.on.aws/api/upload?token=cfas-agent-demo-2026" \
+       -F "file=@data/cfas-bylaws-rev-9.docx" \
+       -F "tenant_id=cfas-corp"
+
+  # Query the autonomous multi-agent squad via the live Function URL
+  curl -X POST "https://b6ijwq6a2ng5q3gbe3kjwl5a5a0suxlf.lambda-url.us-east-1.on.aws/api/chat?token=cfas-agent-demo-2026" \
+       -H "Content-Type: application/json" \
+       -d '{"prompt": "What constitutes a quorum for the Board of Directors under the bylaws?"}'
+  ```
+
+#### B. Local Development Server
+Run the portal locally for offline testing or rapid frontend prototyping:
+
+```bash
+# Start the local FastAPI server (Port 8000)
 python app/BedrockAgentCoreApp/server.py
 ```
-
-- **Private Access URL:** `http://localhost:8000/?token=cfas-agent-demo-2026`
-- **Security:** Protected via token validation (`?token=...`, `X-API-Key` header, or Bearer auth).
-- **Automated Workflow:**
-  1. Interviewer uploads any document via the web UI or `POST /api/upload`.
-  2. The document is streamed directly to `s3://cfas-corporate-docs-725079717969/uploads/cfas-corp/<filename>`.
-  3. Context-enriched semantic chunking extracts sections and generates 1024-dim embeddings via `amazon.titan-embed-text-v2:0`.
-  4. S3 vector store is updated and retriever cache refreshed.
-  5. Interviewers immediately query the document via chat or `POST /api/chat`, receiving verified answers with exact legal/document citations.
-
-```bash
-# Upload via cURL:
-curl -X POST "http://localhost:8000/api/upload?token=cfas-agent-demo-2026" \
-     -F "file=@data/cfas-bylaws-rev-9.docx" \
-     -F "tenant_id=cfas-corp"
-
-# Query the agent squad via cURL:
-curl -X POST "http://localhost:8000/api/chat?token=cfas-agent-demo-2026" \
-     -H "Content-Type: application/json" \
-     -d '{"prompt": "Summarize the key provisions of the file I just uploaded."}'
-```
+- **Local URL:** `http://localhost:8000/?token=cfas-agent-demo-2026`
 
 ---
 
