@@ -10,10 +10,11 @@
   "runtimes": [
     {
       "name": "BedrockAgentCoreApp",
-      "build": "CodeZip",
+      "build": "Container",
       "entrypoint": "main.py",
       "codeLocation": "app/BedrockAgentCoreApp/",
-      "runtimeVersion": "PYTHON_3_14",
+      "dockerfile": "Dockerfile",
+      "runtimeVersion": "PYTHON_3_12",
       "networkMode": "PUBLIC",
       "protocol": "HTTP"
     }

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual Environments
+.venv/
+*/.venv/
+env/
+venv/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Vector Database Local Stores
+vector_store/
+*/vector_store/
+*.lance/
+
+# AWS CDK & AgentCore Logs
+cdk.out/
+agentcore/cdk/cdk.out/
+agentcore/cdk/node_modules/
+agentcore/.cli/logs/
+agentcore/.cli/cache/
+
+# OS and IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

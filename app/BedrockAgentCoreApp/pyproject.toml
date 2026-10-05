@@ -14,7 +14,9 @@ dependencies = [
     "botocore[crt] >= 1.35.0",
     "mcp >= 1.28.1, < 2.0.0",
     "strands-agents >= 1.15.0",
-    
+    "strands-agents-tools",
+    "requests >= 2.31.0",
+    "agent-squad >= 1.1.4"
 ]
 
 [tool.hatch.build.targets.wheel]

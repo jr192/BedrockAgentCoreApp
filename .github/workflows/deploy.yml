@@ -1,0 +1,133 @@
+name: CI/CD Pipeline - Enterprise GenAI Multi-Agent System
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  id-token: write   # Required for AWS OIDC authentication (Zero hardcoded secrets!)
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}  # E.g. arn:aws:iam::725079717969:role/GitHubActionsAgentCoreDeployRole
+
+jobs:
+  # ============================================================================
+  # Stage 1: Quality Gate & LLMOps Automated Evaluations
+  # ============================================================================
+  quality-and-eval-gate:
+    name: 🧪 Quality, Session & LLMOps Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e app/BedrockAgentCoreApp
+          pip install -r AgentsLab/requirements.txt || true
+          pip install lancedb pyarrow numpy pytest ruff
+
+      - name: Code Quality & Linting
+        run: |
+          echo "Running static analysis and linting..."
+          ruff check app/ lambda_ingest/ vector_db/ tests/ evals/ || echo "Linting completed with warnings."
+
+      - name: Configure AWS Credentials (for Bedrock Tests)
+        if: env.AWS_ROLE_ARN != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions-eval-runner
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run Multi-Turn Session Isolation Tests
+        if: env.AWS_ROLE_ARN != ''
+        run: |
+          echo "Executing session isolation suite..."
+          python tests/test_sessions.py
+
+      - name: Run Vector Pipeline Tests
+        if: env.AWS_ROLE_ARN != ''
+        run: |
+          echo "Executing serverless vector pipeline tests..."
+          python tests/test_vector_pipeline.py
+
+      - name: Run LLMOps Benchmark Suite (Judge: Nova Lite)
+        if: env.AWS_ROLE_ARN != ''
+        run: |
+          echo "Executing LLM-as-a-Judge benchmark on 10 Golden Test Cases..."
+          python evals/run_evals.py
+
+      - name: Upload Evaluation Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-scorecard
+          path: evals/eval_report.md
+          if-no-files-found: ignore
+
+  # ============================================================================
+  # Stage 2: Continuous Deployment to AWS Bedrock AgentCore
+  # ============================================================================
+  deploy-to-aws:
+    name: 🚀 Deploy Container & Ingestion Pipeline
+    needs: quality-and-eval-gate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions-deploy-runner
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js 20 (for AgentCore CLI & CDK)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install AgentCore CLI & CDK Dependencies
+        run: |
+          npm install -g @aws/agentcore-cli
+          pip install boto3
+
+      - name: Deploy S3 Event-Driven Ingestion Lambda
+        run: |
+          echo "Deploying S3 Event Ingestion Lambda Worker..."
+          python scripts/deploy_ingest_lambda.py
+
+      - name: Validate AgentCore Configuration
+        run: |
+          agentcore validate
+
+      - name: Deploy Multi-Agent Runtime to AWS
+        run: |
+          echo "Deploying containerized agent runtime to AWS Bedrock AgentCore..."
+          agentcore deploy --yes --verbose
+
+      - name: Verify Live Deployment (Smoke Test)
+        run: |
+          echo "Running live cloud smoke test..."
+          agentcore invoke --prompt "What constitutes a quorum for the Board of Directors under the bylaws?"

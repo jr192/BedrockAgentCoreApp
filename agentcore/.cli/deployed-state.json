@@ -1,3 +1,17 @@
 {
-  "targets": {}
+  "targets": {
+    "default": {
+      "resources": {
+        "runtimes": {
+          "BedrockAgentCoreApp": {
+            "runtimeId": "BedrockAgentCoreApp_BedrockAgentCoreApp-5keeMq9c1S",
+            "runtimeArn": "arn:aws:bedrock-agentcore:us-east-1:725079717969:runtime/BedrockAgentCoreApp_BedrockAgentCoreApp-5keeMq9c1S",
+            "roleArn": "arn:aws:iam::725079717969:role/AgentCore-BedrockAgentCor-ApplicationAgentBedrockAg-2keTGUiesMap"
+          }
+        },
+        "stackName": "AgentCore-BedrockAgentCoreApp-default",
+        "deployHash": "c651eb92e8532314"
+      }
+    }
+  }
 }
