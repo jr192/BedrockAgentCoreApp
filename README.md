@@ -2,7 +2,24 @@
 
 Production-ready, multi-agent AI system built on **Amazon Bedrock AgentCore Runtime**, **Strands SDK**, and **AgentSquad**. 
 
-Features an autonomous **Supervisor Router**, **Zero-Idle-Cost Serverless Vector Retrieval** (replacing expensive OpenSearch clusters), an **Event-Driven S3 Ingestion Pipeline**, strict **multi-tenant session isolation**, and automated **LLM-as-a-Judge evaluations**.
+Features an autonomous **Supervisor Router**, **Zero-Idle-Cost Serverless Vector Retrieval** (replacing expensive OpenSearch clusters), an **Event-Driven S3 Ingestion Pipeline**, strict **multi-tenant session isolation**, automated **LLM-as-a-Judge evaluations**, and a **Live Serverless Executive Web Testing Portal**.
+
+---
+
+## 🌐 Live Executive Evaluation Portal (Public AWS Demo)
+
+Test the live multi-agent system and custom document ingestion directly in your browser:
+
+👉 **[Launch Executive Evaluation Portal](https://b6ijwq6a2ng5q3gbe3kjwl5a5a0suxlf.lambda-url.us-east-1.on.aws/?token=cfas-agent-demo-2026)**
+
+- **Direct HTTPS URL**: `https://b6ijwq6a2ng5q3gbe3kjwl5a5a0suxlf.lambda-url.us-east-1.on.aws/?token=cfas-agent-demo-2026`
+- **Private Access Key**: `cfas-agent-demo-2026`
+- **Hosting Architecture**: Serverless AWS Lambda with Public Function URL (**$0.00 idle cost**, pay-per-request).
+- **Portal Capabilities**:
+  1. **Interactive Document Upload**: Drag-and-drop `.docx`, `.txt`, or `.md` files directly to AWS S3 (`s3://cfas-corporate-docs-725079717969/uploads/`).
+  2. **Automated Vector Ingestion**: Real-time semantic chunking + Amazon Titan v2 (`amazon.titan-embed-text-v2:0`, 1024-dim) embeddings stored in the serverless S3 vector index.
+  3. **Live Indexed Document Catalog**: Displays indexed documents, chunk counts, and categories.
+  4. **Multi-Agent Chat Console**: Routes queries with Nova Micro supervisor to specialized agents with visual routing badges (`[Routing: ...]`) and verified legal citations.
 
 ---
 

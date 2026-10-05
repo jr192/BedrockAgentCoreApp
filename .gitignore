@@ -5,7 +5,9 @@ __pycache__/
 *.so
 .Python
 build/
+.portal_build/
 dist/
+*.zip
 *.egg-info/
 
 # Virtual Environments
