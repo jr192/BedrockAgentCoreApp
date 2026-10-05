@@ -1,6 +1,6 @@
 name: CI/CD Pipeline - Enterprise GenAI Multi-Agent System
 
-on:
+'on':
   push:
     branches: [main]
   pull_request:
@@ -64,7 +64,7 @@ jobs:
           echo "Executing serverless vector pipeline tests..."
           python tests/test_vector_pipeline.py
 
-      - name: Run LLMOps Benchmark Suite (Judge: Nova Lite)
+      - name: "Run LLMOps Benchmark Suite (Judge: Nova Lite)"
         if: env.AWS_ROLE_ARN != ''
         run: |
           echo "Executing LLM-as-a-Judge benchmark on 10 Golden Test Cases..."
@@ -84,7 +84,7 @@ jobs:
   deploy-to-aws:
     name: 🚀 Deploy Container & Ingestion Pipeline
     needs: quality-and-eval-gate
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.AWS_ROLE_ARN != ''
     runs-on: ubuntu-latest
 
     steps:
