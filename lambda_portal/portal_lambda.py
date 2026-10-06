@@ -104,6 +104,18 @@ def health_check():
             "Corporate Bylaws & Document Specialist",
             "Operations & General Assistant",
         ],
+        "guardrail": {
+            "id": "dxes1svttuw8",
+            "name": "Enterprise-Compliance-Guardrail",
+            "status": "ACTIVE",
+            "policies": [
+                "INSULTS (HIGH)",
+                "HATE (HIGH)",
+                "MISCONDUCT (HIGH)",
+                "PROMPT_ATTACK (HIGH)",
+                "CandidateDefamationAndAbuse (DENY)",
+            ],
+        },
     }
 
 
@@ -248,17 +260,24 @@ async def chat_with_agent(
             except Exception:
                 output_text = body_str
 
-        # Extract agent routing badge
+        # Extract agent routing or guardrail badge
         chosen_agent = "Operations & General Assistant"
-        if "[Routing: João Rodrigues" in output_text or "João Rodrigues" in output_text[:120] or "Euronext" in output_text[:80] or "FanDuel" in output_text[:80]:
+        if "[Guardrail: Intervened]" in output_text or "Guardrail" in output_text[:80]:
+            chosen_agent = "Enterprise Guardrail Interception"
+            routing_badge = "[Guardrail: Intervened]"
+        elif "[Routing: João Rodrigues" in output_text or "João Rodrigues" in output_text[:120] or "Euronext" in output_text[:80] or "FanDuel" in output_text[:80]:
             chosen_agent = "João Rodrigues - Senior SE & GenAI Specialist"
+            routing_badge = "[Routing: João Rodrigues - Senior SE & GenAI Specialist]"
         elif "[Routing: AST SpaceMobile Stock Analyst]" in output_text or "AST SpaceMobile" in output_text[:80]:
             chosen_agent = "AST SpaceMobile Stock Analyst"
+            routing_badge = "[Routing: AST SpaceMobile Stock Analyst]"
         elif "[Routing: Corporate Bylaws Specialist]" in output_text or "Bylaw" in output_text[:80] or "Article" in output_text[:80]:
             chosen_agent = "Corporate Bylaws & Document Specialist"
+            routing_badge = "[Routing: Corporate Bylaws Specialist]"
+        else:
+            routing_badge = f"[Routing: {chosen_agent}]"
 
-        routing_badge = f"[Routing: {chosen_agent}]"
-        if not output_text.startswith("[Routing:"):
+        if not output_text.startswith("[Routing:") and not output_text.startswith("[Guardrail:"):
             output_text = f"{routing_badge}\n\n{output_text}"
 
         return ChatResponse(
@@ -645,6 +664,12 @@ INDEX_HTML = """<!DOCTYPE html>
       margin-bottom: 8px;
     }
 
+    .badge-guardrail {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
     .badge-candidate {
       background: rgba(168, 85, 247, 0.15);
       color: #c084fc;
@@ -975,7 +1000,8 @@ INDEX_HTML = """<!DOCTYPE html>
       if (badge) {
         const badgeDiv = document.createElement('div');
         let badgeClass = 'badge-ops';
-        if (badge.includes('João') || badge.includes('SE & GenAI') || badge.includes('Rodrigues')) badgeClass = 'badge-candidate';
+        if (badge.includes('Guardrail')) badgeClass = 'badge-guardrail';
+        else if (badge.includes('João') || badge.includes('SE & GenAI') || badge.includes('Rodrigues')) badgeClass = 'badge-candidate';
         else if (badge.includes('Stock')) badgeClass = 'badge-asts';
         else if (badge.includes('Bylaw') || badge.includes('Document')) badgeClass = 'badge-bylaws';
         badgeDiv.className = `badge-routing ${badgeClass}`;

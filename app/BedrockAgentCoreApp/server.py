@@ -32,11 +32,11 @@ for p in [_app_dir, _project_root]:
 try:
     from bylaws_retriever import reload_index, search_company_documents
     from lambda_ingest.handler import process_file
-    from main import extract_text_from_message, orchestrator
+    from main import evaluate_guardrails, extract_text_from_message, orchestrator
 except ImportError:
     from app.BedrockAgentCoreApp.bylaws_retriever import reload_index, search_company_documents
     from lambda_ingest.handler import process_file
-    from app.BedrockAgentCoreApp.main import extract_text_from_message, orchestrator
+    from app.BedrockAgentCoreApp.main import evaluate_guardrails, extract_text_from_message, orchestrator
 
 # AWS Environment & Configuration
 REGION = os.environ.get("AWS_REGION", "us-east-1")
@@ -126,6 +126,18 @@ def health_check():
             "Corporate Bylaws & Document Specialist",
             "Operations & General Assistant",
         ],
+        "guardrail": {
+            "id": "dxes1svttuw8",
+            "name": "Enterprise-Compliance-Guardrail",
+            "status": "ACTIVE",
+            "policies": [
+                "INSULTS (HIGH)",
+                "HATE (HIGH)",
+                "MISCONDUCT (HIGH)",
+                "PROMPT_ATTACK (HIGH)",
+                "CandidateDefamationAndAbuse (DENY)",
+            ],
+        },
     }
 
 
@@ -255,6 +267,17 @@ async def chat_with_agent(
     """
     session_id = payload.session_id or f"session-{uuid.uuid4().hex[:12]}"
     user_id = payload.user_id or "interviewer-rh"
+
+    # 1. AWS Bedrock Guardrail Gate
+    gr_result = evaluate_guardrails(payload.prompt)
+    if gr_result["intervened"]:
+        return ChatResponse(
+            status="SUCCESS",
+            agent="Enterprise Guardrail Interception",
+            routing_badge="[Guardrail: Intervened]",
+            response=f"[Guardrail: Intervened]\n\n🛡️ **Enterprise Safety Interception**\n\n{gr_result['message']}",
+            session_id=session_id,
+        )
 
     try:
         response = await orchestrator.route_request(
@@ -661,6 +684,12 @@ def index_page():
       margin-bottom: 8px;
     }
 
+    .badge-guardrail {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
     .badge-candidate {
       background: rgba(168, 85, 247, 0.15);
       color: #c084fc;
@@ -991,7 +1020,8 @@ def index_page():
       if (badge) {
         const badgeDiv = document.createElement('div');
         let badgeClass = 'badge-ops';
-        if (badge.includes('João') || badge.includes('SE & GenAI') || badge.includes('Rodrigues')) badgeClass = 'badge-candidate';
+        if (badge.includes('Guardrail')) badgeClass = 'badge-guardrail';
+        else if (badge.includes('João') || badge.includes('SE & GenAI') || badge.includes('Rodrigues')) badgeClass = 'badge-candidate';
         else if (badge.includes('Stock')) badgeClass = 'badge-asts';
         else if (badge.includes('Bylaw') || badge.includes('Document')) badgeClass = 'badge-bylaws';
         badgeDiv.className = `badge-routing ${badgeClass}`;

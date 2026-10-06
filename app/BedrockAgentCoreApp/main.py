@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Any, AsyncGenerator
 
+import boto3
 from agent_squad.agents import Agent as SquadAgent, AgentOptions
 from agent_squad.classifiers import BedrockClassifier, BedrockClassifierOptions
 from agent_squad.classifiers.classifier import ClassifierResult
@@ -25,6 +26,43 @@ from stock_analyst import get_ast_press_releases, get_stock_quote
 
 app = BedrockAgentCoreApp()
 log = app.logger
+
+GUARDRAIL_ID = "dxes1svttuw8"
+GUARDRAIL_VERSION = "DRAFT"
+GUARDRAIL_REGION = "us-east-1"
+_guardrail_client = None
+
+
+def get_guardrail_client():
+    global _guardrail_client
+    if _guardrail_client is None:
+        _guardrail_client = boto3.client("bedrock-runtime", region_name=GUARDRAIL_REGION)
+    return _guardrail_client
+
+
+def evaluate_guardrails(prompt: str) -> dict:
+    """Evaluate prompt against AWS Bedrock Guardrail for insults, defamation, and prompt attack."""
+    try:
+        client = get_guardrail_client()
+        res = client.apply_guardrail(
+            guardrailIdentifier=GUARDRAIL_ID,
+            guardrailVersion=GUARDRAIL_VERSION,
+            source="INPUT",
+            content=[{"text": {"text": prompt}}],
+        )
+        if res.get("action") == "GUARDRAIL_INTERVENED":
+            default_msg = (
+                "This request cannot be processed. This system enforces professional conduct "
+                "and strictly prohibits insults, derogatory remarks, or defamation regarding João Rodrigues. "
+                "Please direct your questions to João's verified professional achievements, engineering experience, "
+                "and technical qualifications."
+            )
+            outputs = res.get("outputs", [])
+            output_text = outputs[0].get("text") if outputs and outputs[0].get("text") else default_msg
+            return {"intervened": True, "message": output_text}
+    except Exception as e:
+        log.warning(f"Bedrock Guardrail evaluation bypassed on warning: {e}")
+    return {"intervened": False, "message": ""}
 
 
 # ==============================================================================
@@ -405,6 +443,22 @@ async def invoke(payload: dict, context: Any) -> AsyncGenerator[dict, None]:
     session_id = getattr(context, "session_id", "default-session")
     user_id = getattr(context, "user_id", "default-user")
     prompt = _extract_prompt(payload)
+
+    # 1. AWS Bedrock Guardrail Gate (Anti-Defamation, Insults, Hate, Prompt Injection)
+    gr_result = evaluate_guardrails(prompt)
+    if gr_result["intervened"]:
+        log.warning(f"Bedrock Guardrail intercepted prompt for user '{user_id}', session '{session_id}'")
+        guardrail_output = f"[Guardrail: Intervened]\n\n🛡️ **Enterprise Safety Interception**\n\n{gr_result['message']}"
+        yield {
+            "event": {
+                "contentBlockDelta": {
+                    "delta": {
+                        "text": guardrail_output
+                    }
+                }
+            }
+        }
+        return
 
     log.info(f"AgentSquad routing prompt for user '{user_id}', session '{session_id}'...")
 
