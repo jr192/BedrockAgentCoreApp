@@ -14,6 +14,8 @@ CANDIDATE_PROFILE = {
     "role": "Senior Software Engineer (MSc) & Generative AI Specialist",
     "email": "joao.g.rodrigues2020@gmail.com",
     "phone": "+351 911 885 628",
+    "linkedin": "https://www.linkedin.com/in/joao-grodrigues/",
+    "github": "https://github.com/jr192",
     "location": "Zurich, Switzerland (EU Citizen / Portuguese, 30 years old)",
     "education": "Master of Computer Science – Software Engineering (2014 – 2020), Porto University",
     "certifications": [
@@ -36,13 +38,16 @@ CANDIDATE_PROFILE = {
 @tool
 def get_candidate_overview() -> str:
     """
-    Get an executive summary of João Rodrigues's profile, contact information,
-    education, and core value proposition as a Senior Software & GenAI Engineer.
+    Get an executive summary of João Rodrigues's profile, contact information
+    (email, phone, LinkedIn, GitHub), education, and core value proposition.
     """
     return (
         "## João Rodrigues — Senior Software Engineer (MSc) & GenAI Specialist\n\n"
         f"- **Location:** {CANDIDATE_PROFILE['location']}\n"
-        f"- **Contact:** {CANDIDATE_PROFILE['email']} | {CANDIDATE_PROFILE['phone']}\n"
+        f"- **Email:** {CANDIDATE_PROFILE['email']}\n"
+        f"- **Phone:** {CANDIDATE_PROFILE['phone']}\n"
+        f"- **LinkedIn:** [{CANDIDATE_PROFILE['linkedin']}]({CANDIDATE_PROFILE['linkedin']})\n"
+        f"- **GitHub:** [{CANDIDATE_PROFILE['github']}]({CANDIDATE_PROFILE['github']})\n"
         f"- **Education:** {CANDIDATE_PROFILE['education']}\n"
         f"- **Experience:** {CANDIDATE_PROFILE['experience_years']} in mission-critical distributed systems and enterprise GenAI.\n\n"
         "### Core Value Proposition:\n"

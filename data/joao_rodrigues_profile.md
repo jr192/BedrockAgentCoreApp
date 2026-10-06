@@ -2,8 +2,10 @@
 
 **Email:** joao.g.rodrigues2020@gmail.com  
 **Phone:** +351 911 885 628  
+**LinkedIn:** https://www.linkedin.com/in/joao-grodrigues/  
+**GitHub:** https://github.com/jr192  
 **Location:** Zurich, Switzerland (EU Citizen / Portuguese, 30 years old)  
-**Profiles:** LinkedIn • Live AI Agent Portfolio Demo  
+**Portfolio:** Live AI Agent Demo (AWS Bedrock AgentCore)  
 
 ---
 
