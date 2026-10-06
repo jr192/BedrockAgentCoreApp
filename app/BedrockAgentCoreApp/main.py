@@ -15,6 +15,12 @@ from strands.agent.conversation_manager.null_conversation_manager import NullCon
 from strands_tools import calculator, current_time
 
 from bylaws_retriever import search_company_bylaws
+from profile_analyst import (
+    get_candidate_experience,
+    get_candidate_overview,
+    get_candidate_pitch_and_why_hire,
+    get_genai_and_technical_skills,
+)
 from stock_analyst import get_ast_press_releases, get_stock_quote
 
 app = BedrockAgentCoreApp()
@@ -122,6 +128,34 @@ operations_assistant_strands = Agent(
     ),
 )
 
+# Agent D: João Rodrigues Profile & Career Specialist
+profile_specialist_strands = Agent(
+    model=load_model(),
+    tools=[
+        get_candidate_overview,
+        get_candidate_experience,
+        get_genai_and_technical_skills,
+        get_candidate_pitch_and_why_hire,
+    ],
+    conversation_manager=NullConversationManager(),
+    system_prompt=(
+        "You are the João Rodrigues - Senior SE & GenAI Specialist agent. You directly represent João Rodrigues, "
+        "a Senior Software Engineer (MSc) and Generative AI Specialist based in Zurich, Switzerland. "
+        "You answer recruiter and interviewer inquiries with extreme depth, accuracy, metrics, and professional enthusiasm. "
+        "You have full knowledge of his 6+ years of experience across Euronext Corporate Solutions and FanDuel, "
+        "his Master's thesis at Porto University, and his government startup award. "
+        "Always consult your tools (get_candidate_overview, get_candidate_experience, get_genai_and_technical_skills, "
+        "get_candidate_pitch_and_why_hire) to provide structured answers with concrete examples: "
+        "- At FanDuel: Scaling platforms across all U.S. states to handle millions of requests per minute during the Super Bowl "
+        "and March Madness with zero downtime; building real-time Kafka streaming ETL; building the 'Same Game Parlay' feature. "
+        "- At Euronext: Architecting the first AI project (iBabs Debrief) with speech-to-text, real-time meeting summarization, and subtitling; "
+        "fine-tuning open-source LLMs to match frontier models at a fraction of inference cost; multimodal RAG; building an enterprise video platform. "
+        "- Architecture: Domain-Driven Design (DDD), Clean Architecture, CQRS (MediatR), C#/.NET, Python/FastAPI, Golang on AWS, Kubernetes. "
+        "Structure your responses with executive summaries, clear markdown sections, and authoritative technical depth. "
+        "Identify yourself as the João Rodrigues - Senior SE & GenAI Specialist."
+    ),
+)
+
 
 # ==============================================================================
 # 3. AgentSquad Adapter and Robust Router
@@ -218,8 +252,12 @@ class RobustBedrockClassifier(BedrockClassifier):
                     # Semantic keyword fallback if classifier chose 'unknown'
                     if not selected or agent_id == "unknown":
                         t = input_text.lower()
-                        # Document / Uploaded file questions take precedence unless ASTS is explicitly mentioned
-                        if any(w in t for w in ["rubric", "upload", "file", "document", "policy", "bylaw", "quorum", "board", "officer", "voting", "clause", "provision", "agreement", "stipend"]):
+                        if any(w in t for w in ["joao", "joão", "rodrigues", "candidate", "cv", "resume", "cover letter", "euronext", "fanduel", "experience", "background", "hire", "why hire", "interview", "ibabs", "same game parlay", "se experience", "genai experience", "skills", "who are you", "tell me about yourself", "author", "creator"]):
+                            for ag in self.agents.values():
+                                if "joao" in ag.name.lower() or "rodrigues" in ag.name.lower():
+                                    selected = ag
+                                    break
+                        elif any(w in t for w in ["rubric", "upload", "file", "document", "policy", "bylaw", "quorum", "board", "officer", "voting", "clause", "provision", "agreement", "stipend"]):
                             selected = self.agents.get("corporate-bylaws-specialist")
                         elif any(w in t for w in ["asts", "ast spacemobile", "stock", "share price", "52-week", "press release"]):
                             selected = self.agents.get("ast-spacemobile-stock-analyst")
@@ -236,7 +274,13 @@ class RobustBedrockClassifier(BedrockClassifier):
 
         # Fallback to general assistant
         t = input_text.lower()
-        if any(w in t for w in ["rubric", "upload", "file", "document", "policy", "bylaw", "quorum", "board", "officer", "voting", "stipend"]):
+        chosen = None
+        if any(w in t for w in ["joao", "joão", "rodrigues", "candidate", "cv", "resume", "cover letter", "euronext", "fanduel", "experience", "background", "hire", "why hire", "interview", "ibabs", "same game parlay", "se experience", "genai experience", "skills", "who are you", "tell me about yourself", "author", "creator"]):
+            for ag in self.agents.values():
+                if "joao" in ag.name.lower() or "rodrigues" in ag.name.lower():
+                    chosen = ag
+                    break
+        elif any(w in t for w in ["rubric", "upload", "file", "document", "policy", "bylaw", "quorum", "board", "officer", "voting", "stipend"]):
             chosen = self.agents.get("corporate-bylaws-specialist")
         elif any(w in t for w in ["asts", "ast spacemobile", "stock", "share price", "press release"]):
             chosen = self.agents.get("ast-spacemobile-stock-analyst")
@@ -262,6 +306,19 @@ classifier = RobustBedrockClassifier(
 )
 
 orchestrator = AgentSquad(classifier=classifier)
+
+orchestrator.add_agent(
+    StrandsAdapterAgent(
+        AgentOptions(
+            name="João Rodrigues - Senior SE & GenAI Specialist",
+            description=(
+                "Specializes in João Rodrigues's career experience, background, CV, cover letter, "
+                "Euronext, FanDuel, GenAI, C#/.NET, Python, distributed systems, high concurrency, and reasons to hire him."
+            ),
+        ),
+        strands_agent=profile_specialist_strands,
+    )
+)
 
 orchestrator.add_agent(
     StrandsAdapterAgent(

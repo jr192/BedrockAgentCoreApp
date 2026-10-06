@@ -46,6 +46,7 @@ flowchart TD
         SUPERVISOR["🧠 Autonomous Supervisor Router<br/>(AgentSquad • amazon.nova-micro-v1:0)"]
         
         subgraph SubAgents ["Specialized Sub-Agents (Strands SDK 1.50)"]
+            A0["👨‍💻 João Rodrigues — Senior SE & GenAI Specialist<br/>• 6+ yrs experience (Euronext & FanDuel)<br/>• Enterprise GenAI, RAG, Fine-Tuning<br/>• Super Bowl / March Madness scale (millions req/min)<br/>• C#/.NET, Python, DDD, CQRS, Kafka, AWS"]
             A1["📈 AST SpaceMobile Stock Analyst<br/>• Real-time stock prices & 52W range<br/>• Official company press releases"]
             A2["🏛️ Corporate Bylaws Specialist<br/>• Zero-idle-cost semantic search<br/>• Verified legal citations (Articles I-XV)"]
             A3["⏱️ Operations & General Assistant<br/>• Deterministic math & business SLAs<br/>• Keyword frequency analytics"]
@@ -53,7 +54,7 @@ flowchart TD
     end
 
     subgraph StorageLayer ["4. Serverless Storage & Vector Layer ($0.00 Idle Cost)"]
-        S3_DOCS[("📦 AWS S3 Bucket<br/><code>cfas-corporate-docs-725079717969</code><br/>• /uploads/ (User uploaded docs)<br/>• /bylaws/ (Core governance)")]
+        S3_DOCS[("📦 AWS S3 Bucket<br/><code>cfas-corporate-docs-725079717969</code><br/>• /uploads/ (User uploaded docs & CV profile)<br/>• /bylaws/ (Core governance)")]
         
         INGEST_WORKER["⚡ Ingestion Worker<br/>(corporate-bylaws-ingest-worker)<br/>Semantic Chunking Engine"]
         
@@ -91,6 +92,7 @@ flowchart TD
     TITAN --> VEC_STORE
 
     %% Supervisor Routing
+    SUPERVISOR -->|Candidate Bio & Tech Stack| A0
     SUPERVISOR -->|Market Queries| A1
     SUPERVISOR -->|Governance & Bylaws| A2
     SUPERVISOR -->|Math & SLAs| A3
@@ -125,6 +127,7 @@ BedrockAgentCoreApp/
 ├── app/                               # 🧠 Production Multi-Agent Runtime (AWS Bedrock AgentCore)
 │   └── BedrockAgentCoreApp/
 │       ├── main.py                    # Multi-agent supervisor (AgentSquad) & streaming entrypoint
+│       ├── profile_analyst.py         # João Rodrigues profile tools (Euronext, FanDuel, GenAI, .NET)
 │       ├── bylaws_retriever.py        # Semantic bylaws retriever tool (Titan v2 + S3 Vector Store)
 │       ├── bylaws_index.json          # Pre-computed 1024-dim vector index (690 KB)
 │       ├── stock_analyst.py           # ASTS stock quotes & press release tools
@@ -159,7 +162,8 @@ BedrockAgentCoreApp/
 │   └── compare_chunking.py            # Fixed-window vs. Semantic chunking comparison
 │
 ├── data/                              # 📄 Source Corpora
-│   └── cfas-bylaws-rev-9.docx         # Original corporate bylaws document
+│   ├── cfas-bylaws-rev-9.docx         # Original corporate bylaws document
+│   └── joao_rodrigues_profile.md      # Structured candidate profile & CV/cover letter
 │
 ├── agentcore/                         # ☁️ Bedrock AgentCore Infrastructure (CDK)
 │   ├── agentcore.json                 # Declarative project specification
@@ -264,6 +268,9 @@ agentcore invoke --prompt "What constitutes a quorum for the Board of Directors 
 
 # 3. Operations query -> Routes to Operations & General Assistant
 agentcore invoke --prompt "If an incident is opened on 2026-10-05, calculate the resolution deadline for a 7 business day SLA."
+
+# 4. Candidate Profile & Technical Evaluation -> Routes to João Rodrigues Specialist
+agentcore invoke --prompt "Tell me about João Rodrigues's background and experience as a Senior Software & GenAI Engineer."
 ```
 
 ### 7. Deploy & Access the Executive Web Testing Portal

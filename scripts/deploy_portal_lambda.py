@@ -143,7 +143,6 @@ def build_deployment_package() -> bytes:
     ]
     subprocess.check_call(cmd, cwd=project_root)
 
-    # Copy portal_lambda.py and handler.py into build_dir
     shutil.copy2(
         os.path.join(project_root, "lambda_portal", "portal_lambda.py"),
         os.path.join(build_dir, "portal_lambda.py"),
@@ -151,6 +150,10 @@ def build_deployment_package() -> bytes:
     shutil.copy2(
         os.path.join(project_root, "lambda_portal", "handler.py"),
         os.path.join(build_dir, "handler.py"),
+    )
+    shutil.copy2(
+        os.path.join(project_root, "lambda_portal", "profile_analyst.py"),
+        os.path.join(build_dir, "profile_analyst.py"),
     )
 
     print("   ✓ Files staged. Compressing into zip package...")

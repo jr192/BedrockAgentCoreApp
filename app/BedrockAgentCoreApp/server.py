@@ -121,6 +121,7 @@ def health_check():
         "region": REGION,
         "s3_bucket": S3_BUCKET,
         "agents": [
+            "João Rodrigues - Senior SE & GenAI Specialist",
             "AST SpaceMobile Stock Analyst",
             "Corporate Bylaws & Document Specialist",
             "Operations & General Assistant",
@@ -660,6 +661,12 @@ def index_page():
       margin-bottom: 8px;
     }
 
+    .badge-candidate {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
     .badge-asts {
       background: rgba(16, 185, 129, 0.15);
       color: #34d399;
@@ -812,16 +819,18 @@ def index_page():
 
       <div class="chat-messages" id="chatMessages">
         <div class="message agent">
-          <div class="badge-routing badge-ops">[Routing: Operations & General Assistant]</div>
-          <div>Welcome to the CFAS Multi-Agent Portal! You can upload custom corporate files to S3 on the left, and ask me any questions about them. Or test me on live ASTS stock metrics and SLA business computations!</div>
+          <div class="badge-routing badge-candidate">[Routing: João Rodrigues - Senior SE & GenAI Specialist]</div>
+          <div>Welcome! I am the multi-agent system. You can explore <strong>João Rodrigues's career profile & GenAI/SE experience</strong>, upload and index custom documents to S3 on the left, query corporate bylaws, or get live ASTS market intelligence!</div>
         </div>
       </div>
 
       <div class="quick-chips">
-        <div class="chip" onclick="setPrompt('What constitutes a quorum for the Board of Directors under the bylaws?')">🏛️ Quorum Rules</div>
+        <div class="chip" onclick="setPrompt('Tell me about João Rodrigues background and experience as a Senior Software & GenAI Engineer.')">👨‍💻 João's Bio & Experience</div>
+        <div class="chip" onclick="setPrompt('What Generative AI projects, RAG pipelines, and model fine-tuning has João built at Euronext?')">🚀 Euronext GenAI Projects</div>
+        <div class="chip" onclick="setPrompt('Describe João experience handling millions of requests per minute at FanDuel during the Super Bowl.')">🏈 FanDuel Super Bowl Scale</div>
+        <div class="chip" onclick="setPrompt('Why is João Rodrigues the ideal candidate for a Senior Software Engineer and GenAI role?')">🎯 Why Hire João?</div>
         <div class="chip" onclick="setPrompt('What is ASTS current stock price and 52-week high?')">📈 ASTS Stock Quote</div>
-        <div class="chip" onclick="setPrompt('If an incident opened on 2026-10-05, calculate the 7 business day SLA deadline.')">⏱️ SLA Deadline</div>
-        <div class="chip" onclick="setPrompt('Summarize the main provisions of the file I just uploaded.')">📄 Query Uploaded File</div>
+        <div class="chip" onclick="setPrompt('What constitutes a quorum for the Board of Directors under the bylaws?')">🏛️ Quorum Rules</div>
       </div>
 
       <div class="chat-input-bar">
@@ -982,7 +991,8 @@ def index_page():
       if (badge) {
         const badgeDiv = document.createElement('div');
         let badgeClass = 'badge-ops';
-        if (badge.includes('Stock')) badgeClass = 'badge-asts';
+        if (badge.includes('João') || badge.includes('SE & GenAI') || badge.includes('Rodrigues')) badgeClass = 'badge-candidate';
+        else if (badge.includes('Stock')) badgeClass = 'badge-asts';
         else if (badge.includes('Bylaw') || badge.includes('Document')) badgeClass = 'badge-bylaws';
         badgeDiv.className = `badge-routing ${badgeClass}`;
         badgeDiv.textContent = badge;
