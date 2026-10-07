@@ -1,4 +1,4 @@
-# 🚀 Enterprise Ops & Compliance Copilot: Multi-Agent System on AWS
+# 🚀 Joao Rodrigues - Bedrock AgentCore Demo: Enterprise Multi-Agent System on AWS
 
 Production-ready, multi-agent AI system built on **Amazon Bedrock AgentCore Runtime**, **Strands SDK**, and **AgentSquad**. 
 

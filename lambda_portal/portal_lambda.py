@@ -40,7 +40,7 @@ except ImportError:
     from lambda_ingest.handler import process_file
 
 app = FastAPI(
-    title="CFAS Multi-Agent Evaluation Portal",
+    title="Joao Rodrigues - Bedrock AgentCore Demo",
     description="Serverless Executive Testing Endpoint for AWS Bedrock Multi-Agent Architecture",
     version="1.0.0",
 )
@@ -94,7 +94,7 @@ def health_check():
     """Health check endpoint."""
     return {
         "status": "HEALTHY",
-        "service": "cfas-agent-evaluation-portal",
+        "service": "joao-rodrigues-bedrock-agentcore-demo",
         "region": REGION,
         "s3_bucket": S3_BUCKET,
         "agent_runtime_arn": AGENT_RUNTIME_ARN,
@@ -297,8 +297,7 @@ INDEX_HTML = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CFAS Multi-Agent System | Enterprise Evaluation Portal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>Joao Rodrigues - Bedrock AgentCore Demo | Multi-Agent Portal</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -758,7 +757,7 @@ INDEX_HTML = """<!DOCTYPE html>
   <!-- Auth Key Gate Modal -->
   <div id="authModal">
     <div class="auth-card">
-      <div class="logo-badge" style="margin: 0 auto 16px auto;">C</div>
+      <div class="logo-badge" style="margin: 0 auto 16px auto;">JR</div>
       <h2>Private Testing Portal</h2>
       <p>Enter the private interview access token to test document uploads and the autonomous multi-agent flow.</p>
       <input type="password" id="keyInput" class="auth-input" placeholder="Enter Access Key..." value="cfas-agent-demo-2026">
@@ -769,10 +768,10 @@ INDEX_HTML = """<!DOCTYPE html>
   <!-- Header -->
   <header>
     <div class="logo-group">
-      <div class="logo-badge">C</div>
+      <div class="logo-badge">JR</div>
       <div class="logo-title">
-        <h1>CFAS Autonomous Multi-Agent Squad</h1>
-        <span>AWS Bedrock AgentCore • Serverless Vector DB • Strands SDK</span>
+        <h1>Joao Rodrigues - Bedrock AgentCore Demo</h1>
+        <span>AWS Bedrock AgentCore • Serverless Vector DB • Strands SDK • AgentSquad</span>
       </div>
     </div>
     <div class="header-pills">
@@ -829,7 +828,7 @@ INDEX_HTML = """<!DOCTYPE html>
       <div class="chat-messages" id="chatMessages">
         <div class="message agent">
           <div class="badge-routing badge-candidate">[Routing: João Rodrigues - Senior SE & GenAI Specialist]</div>
-          <div>Welcome! I am the multi-agent system. You can explore <strong>João Rodrigues's career profile & GenAI/SE experience</strong>, upload and index custom documents to S3 on the left, query corporate bylaws, or get live ASTS market intelligence!</div>
+          <div>Welcome to the <strong>Joao Rodrigues - Bedrock AgentCore Demo</strong>! You can explore João's career profile & GenAI/SE experience, upload and index custom documents to S3 on the left, query corporate bylaws, or get live ASTS market intelligence!</div>
         </div>
       </div>
 

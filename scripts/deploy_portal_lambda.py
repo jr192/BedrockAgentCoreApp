@@ -214,7 +214,7 @@ def deploy_lambda(role_arn: str, zip_bytes: bytes) -> str:
                     Role=role_arn,
                     Handler="portal_lambda.handler",
                     Code={"ZipFile": zip_bytes},
-                    Description="CFAS Autonomous Multi-Agent Evaluation & Ingestion Web Portal",
+                    Description="Joao Rodrigues - Bedrock AgentCore Demo | Web Portal",
                     Timeout=60,
                     MemorySize=512,
                     Architectures=["x86_64"],
@@ -305,7 +305,7 @@ def test_public_endpoint(function_url: str):
 
 def main():
     print("=" * 70)
-    print("CFAS MULTI-AGENT SYSTEM | WEB PORTAL SERVERLESS DEPLOYMENT")
+    print("JOAO RODRIGUES - BEDROCK AGENTCORE DEMO | WEB PORTAL DEPLOYMENT")
     print("=" * 70)
 
     role_arn = setup_iam_role()
